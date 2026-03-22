@@ -85,13 +85,48 @@
 
 1. 读取可执行任务
 2. 做执行前准入检查
-3. 打开目标线程
-4. 找到正确评论链 / 评论框
-5. 对 `candidate_reply` 做最后微调
-6. 提交评论
-7. 记录执行结果
-8. 安排第一次回看
-9. 回填日报与 dashboard
+3. 将目标线程转换为 **old.reddit 优先** 的执行 URL
+4. 打开目标线程
+5. 找到正确评论链 / 评论框
+6. 对 `candidate_reply` 做最后微调
+7. 提交评论
+8. 记录执行结果
+9. 安排第一次回看
+10. 回填日报与 dashboard
+
+## 执行路径策略
+
+### 默认策略
+- **默认先尝试 old.reddit**
+- 不把新版 Reddit 作为主执行器
+- 新版 Reddit 仅作为：
+  - 辅助查看上下文
+  - 无法切到 old.reddit 时的有限 fallback
+
+### old.reddit 转换规则
+如果 `thread_url` 是：
+- `https://www.reddit.com/...`
+
+优先转换成：
+- `https://old.reddit.com/...`
+
+执行器应先在 old.reddit 检查：
+- 页面是否存在
+- 是否已登录
+- 是否可见评论表单
+- 是否可直接提交
+
+### fallback 规则
+只有在以下情况下才允许尝试新版 Reddit：
+- old.reddit 页面不可达
+- old.reddit 无评论入口
+- old.reddit 登录态异常但新页面可用
+
+如果新版 Reddit 出现以下信号，直接停止本条，不再硬提：
+- 文本写入成功但提交后未实际发布
+- `Comment` / `Reply` 点击后页面无状态变化
+- 无报错、无 toast，但评论未出现
+- 评论框 ref / selector 持续歧义
 
 ---
 
