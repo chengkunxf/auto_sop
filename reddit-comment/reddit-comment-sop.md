@@ -174,6 +174,50 @@
 - 当天暂停自动发送
 - 只保留发现、排队、回填、复盘
 
+## Step 0.5：Browser preflight（建议固化为定时任务）
+
+在正式 comment send 任务前，建议固定增加一个 **browser preflight / warm-up** 步骤。
+
+### 目标
+不是发评论，而是提前确认 OpenClaw 的浏览器执行链路是活的：
+- gateway 正常
+- OpenClaw browser 可启动
+- Chrome / CDP 可连接
+- 持久登录态浏览器可用
+- old.reddit 至少能正常打开
+
+### 为什么要单独拆这一步
+在实际运行里，夜间定时任务更容易遇到的 blocker 不是评论策略，而是：
+- Chrome 没正常启动
+- `DevToolsActivePort` 缺失
+- browser 进程不在，但 gateway 还在
+- 持久登录态浏览器不可连接
+
+这类问题如果等到 comment send 任务启动时才发现，就会直接浪费一个发送窗口。
+
+### 建议顺序
+1. 检查 browser status
+2. 如果 browser 未运行，先尝试 browser start
+3. 检查 CDP / DevTools 是否 ready
+4. 打开一个轻量 Reddit / old.reddit 页面做可用性验证
+5. 只有 preflight 通过，才进入 comment send
+
+### 标准恢复动作
+如果 preflight 发现浏览器执行器不可用，恢复顺序固定为：
+1. **先重启 OpenClaw gateway**
+2. 再次检查 browser status
+3. 如仍未运行，执行 browser start
+4. 再次检查 CDP / DevTools 是否 ready
+5. 只有恢复成功，才允许继续 comment send
+
+### 设计原则（迁移到任意 OpenClaw 服务器时都适用）
+这里要写的是**机制**，不是机器特例：
+- 不依赖某台机器的 PID
+- 不依赖某个用户手动打开 Chrome
+- 不依赖临时人工记忆
+- 永远先做 preflight，再做发送
+- 浏览器执行器不可用时，先恢复链路，再发评论
+
 ---
 
 ## Step 1：发现新线程

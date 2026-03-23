@@ -83,16 +83,49 @@
 
 ## 执行总流程
 
-1. 读取可执行任务
-2. 做执行前准入检查
-3. 将目标线程转换为 **old.reddit 优先** 的执行 URL
-4. 打开目标线程
-5. 找到正确评论链 / 评论框
-6. 对 `candidate_reply` 做最后微调
-7. 提交评论
-8. 记录执行结果
-9. 安排第一次回看
-10. 回填日报与 dashboard
+1. 做 browser preflight / warm-up
+2. 读取可执行任务
+3. 做执行前准入检查
+4. 将目标线程转换为 **old.reddit 优先** 的执行 URL
+5. 打开目标线程
+6. 找到正确评论链 / 评论框
+7. 对 `candidate_reply` 做最后微调
+8. 提交评论
+9. 记录执行结果
+10. 安排第一次回看
+11. 回填日报与 dashboard
+
+## Browser preflight / warm-up
+
+### 目的
+在真正发送前，先验证 OpenClaw 浏览器执行器本身是可用的，避免把正式发送窗口浪费在启动故障上。
+
+### 标准检查项
+1. browser status 正常
+2. browser 进程处于 running
+3. CDP / DevTools ready
+4. 持久登录态浏览器可连接
+5. old.reddit 页面可打开
+
+### 标准恢复顺序
+如果 preflight 失败，恢复顺序固定为：
+1. **重启 OpenClaw gateway**
+2. 再检查 browser status
+3. 如果浏览器未运行，执行 browser start
+4. 再验证 CDP / DevTools ready
+5. 通过后才继续 comment send
+
+### 遇到以下信号时，不要硬发
+- `Could not connect to Chrome`
+- `DevToolsActivePort` 缺失
+- browser running = false
+- CDP ready = false
+- browser 可执行器不可连接
+
+命中这些 blocker 时，执行器应：
+- 先做恢复，不直接发评论
+- 恢复失败则停止本轮发送
+- 在 `daily_reports` / `dashboard` 记录 blocker
 
 ## 执行路径策略
 

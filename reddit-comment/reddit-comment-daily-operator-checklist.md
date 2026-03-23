@@ -32,6 +32,21 @@
 - 登录态是否稳定
 - 当前是否适合自动发送
 - 最近 24 小时有没有明显删除/风控异常
+- browser preflight 是否通过
+
+### 4. 做 browser preflight
+固定先检查：
+- browser status
+- browser running
+- CDP / DevTools ready
+- old.reddit 是否可打开
+
+如果 preflight 失败：
+1. 先重启 OpenClaw gateway
+2. 再次检查 browser status
+3. 如果浏览器未运行，执行 browser start
+4. 恢复成功后再进入发送
+5. 恢复失败则今天只排队、不发送
 
 ### 开工判断
 #### 可以发
