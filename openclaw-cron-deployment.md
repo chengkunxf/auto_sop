@@ -99,13 +99,14 @@ git clone git@github.com:chengkunxf/auto_sop.git /opt/shop_sop/auto_sop
 
 ## 四、当前推荐的 job 结构
 
-当前这套 Reddit / community 自动化，推荐 5 个 job：
+当前这套 Reddit / community 自动化，推荐 6 个 job：
 
 1. Daily community collection
 2. Daily reddit browser preflight
 3. Daily reddit comment send
-4. Daily reddit first review
-5. Daily reddit second review
+4. Daily reddit comment send retry window
+5. Daily reddit first review
+6. Daily reddit second review
 
 ---
 
@@ -158,7 +159,20 @@ git clone git@github.com:chengkunxf/auto_sop.git /opt/shop_sop/auto_sop
 
 ---
 
-## 4) Daily reddit first review
+## 4) Daily reddit comment send retry window
+
+### 时间建议
+- `00:50`
+
+### prompt 模板
+
+```text
+执行 Reddit comment send 的补偿重试窗口。只在以下条件全部成立时才允许重试 1 次：最近一轮主 comment send 未新增发送；最近一轮 run 出现 `Connection error`、`terminated`、无摘要中断等 run 级连接异常；browser preflight 已成功；当天总发送量仍未超标。若只是候选归档、线程锁定、同 subreddit 已达上限、或提交链路本身失败，则不要机械重试。文档依据：<SOP_ROOT>/reddit-comment/reddit-comment-sop.md、<SOP_ROOT>/reddit-comment/reddit-comment-executor-runbook.md、<SOP_ROOT>/reddit-comment/reddit-comment-browser-runbook.md。当前活数据仍使用 <DATA_XLSX>。完成后输出简短结果：是否触发补偿重试、发了几条、为什么重试或为什么不重试。
+```
+
+---
+
+## 5) Daily reddit first review
 
 ### 时间建议
 - `01:20`
@@ -171,7 +185,7 @@ git clone git@github.com:chengkunxf/auto_sop.git /opt/shop_sop/auto_sop
 
 ---
 
-## 5) Daily reddit second review
+## 6) Daily reddit second review
 
 ### 时间建议
 - `12:30`

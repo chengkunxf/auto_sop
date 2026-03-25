@@ -210,6 +210,20 @@
 4. 再次检查 CDP / DevTools 是否 ready
 5. 只有恢复成功，才允许继续 comment send
 
+### Run 级别连接异常的补救机制
+除了 browser / CDP 故障外，还要单独处理一种情况：
+- cron 已触发
+- 机器未睡眠
+- 但 comment send 执行会话本身出现 `Connection error`、`terminated` 或未完成主流程
+
+这类问题不是浏览器冷启动问题，而是 **run 级别会话异常**。
+建议固定增加一个 **retry window**：
+- 在主 comment send 之后 10–20 分钟
+- 只在以下条件成立时重试 1 次：
+  - 本轮未新增发送
+  - 最近一轮 run 出现 `Connection error` / `terminated` / 无摘要中断
+  - 当天发送量仍未超标
+
 ### 设计原则（迁移到任意 OpenClaw 服务器时都适用）
 这里要写的是**机制**，不是机器特例：
 - 不依赖某台机器的 PID
@@ -217,6 +231,7 @@
 - 不依赖临时人工记忆
 - 永远先做 preflight，再做发送
 - 浏览器执行器不可用时，先恢复链路，再发评论
+- run 级别连接异常时，允许自动补 1 次 retry，但不无限重试
 
 ---
 

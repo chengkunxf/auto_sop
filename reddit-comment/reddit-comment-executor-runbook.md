@@ -127,6 +127,31 @@
 - 恢复失败则停止本轮发送
 - 在 `daily_reports` / `dashboard` 记录 blocker
 
+## Run-level retry window
+
+### 目的
+处理另一类常见失败：
+- browser 已恢复
+- 机器未睡眠
+- 但 comment send run 本身因为 `Connection error` / `terminated` / 中途断连而没有真正走到发送步骤
+
+### 规则
+- 主 comment send 结束后，允许设一个 **10–20 分钟后的 retry window**
+- 只允许 **补 1 次**
+- 只有在以下条件满足时才重试：
+  1. 最近一轮 comment send 没有新增发送
+  2. 最近一轮 run 存在 `Connection error`、`terminated`、无摘要中断等 run 级失败迹象
+  3. browser preflight 已成功
+  4. 当天发量仍未超标
+
+### 不要重试的情况
+以下情况不属于 run 级连接失败，不应机械重试：
+- 候选已归档
+- thread 已锁定
+- 社区频控不允许
+- 当天同 subreddit 已达上限
+- 评论提交后未实际发布（属于执行器/页面问题）
+
 ## 执行路径策略
 
 ### 默认策略
